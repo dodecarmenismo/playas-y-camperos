@@ -12,6 +12,7 @@ import {
 import { getProfile } from "./profile.js";
 import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
+import { avatarInnerHtml } from "./avatar.js";
 
 const CATEGORIES = [
   { key: "overall", label: "Campero (global)" },
@@ -161,7 +162,7 @@ function mountCamperoDetail(campero, body) {
       const item = document.createElement("div");
       item.className = "comment-item";
       item.innerHTML = `
-        <div class="avatar-sm">${r.photo ? `<img src="${r.photo}" />` : (r.name || "?")[0].toUpperCase()}</div>
+        <div class="avatar-sm">${avatarInnerHtml(r.photo, r.name)}</div>
         <div class="comment-text-wrap">
           <div class="comment-author">${escapeHtml(r.name || "Anónimo")}</div>
           <div>${escapeHtml(r.comment)}</div>

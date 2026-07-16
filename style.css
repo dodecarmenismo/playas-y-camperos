@@ -295,22 +295,41 @@ label.field-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); ma
   color: var(--muted);
 }
 
-.avatar-picker {
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+.roster-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 10px 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.roster-item:active { background: var(--sand-dark); }
+.roster-item.selected { border-color: var(--sea); }
+.roster-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--sea);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: var(--sand-dark);
-  margin: 0 auto 16px;
-  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 700;
   overflow: hidden;
-  text-align: center;
-  font-size: 0.7rem;
-  color: var(--muted);
 }
-.avatar-picker img { width: 100%; height: 100%; object-fit: cover; }
+.roster-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.roster-name { font-size: 0.8rem; font-weight: 600; color: var(--ink); }
 
 /* Day diary entries */
 .day-entry {

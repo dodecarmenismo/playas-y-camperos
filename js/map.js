@@ -10,6 +10,7 @@ import {
 import { getProfile } from "./profile.js";
 import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
+import { avatarInnerHtml } from "./avatar.js";
 
 // Punto medio entre Málaga capital y Coín
 const CENTER = [36.69, -4.58];
@@ -137,7 +138,7 @@ function openBeachDetail(beachId, name) {
         const row = document.createElement("div");
         row.className = "comment-item";
         row.innerHTML = `
-          <div class="avatar-sm">${r.photo ? `<img src="${r.photo}" />` : (r.name || "?")[0].toUpperCase()}</div>
+          <div class="avatar-sm">${avatarInnerHtml(r.photo, r.name)}</div>
           <div class="comment-text-wrap">
             <div class="comment-author">${escapeHtml(r.name || "Anónimo")}</div>
             <div class="stars small readonly" data-stars="${r.stars}"></div>

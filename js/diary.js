@@ -10,6 +10,7 @@ import {
 } from "./firebase.js";
 import { getProfile } from "./profile.js";
 import { openModal, closeModal } from "./modal.js";
+import { avatarInnerHtml } from "./avatar.js";
 
 const WEEKDAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
@@ -123,7 +124,7 @@ function mountDayDetail(day, body) {
       const item = document.createElement("div");
       item.className = "comment-item";
       item.innerHTML = `
-        <div class="avatar-sm">${e.photo ? `<img src="${e.photo}" />` : (e.name || "?")[0].toUpperCase()}</div>
+        <div class="avatar-sm">${avatarInnerHtml(e.photo, e.name)}</div>
         <div class="comment-text-wrap">
           <div class="comment-author">${escapeHtml(e.name || "Anónimo")}</div>
           <div>${escapeHtml(e.text)}</div>
