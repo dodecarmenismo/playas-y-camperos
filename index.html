@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#1b8a9c" />
+<title>Playas &amp; Camperos</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header id="app-header">
+    <div id="app-title">🏖️ Playas &amp; Camperos</div>
+    <button id="profile-badge" class="profile-badge" title="Cambiar de perfil">
+      <img id="profile-badge-img" src="" alt="" class="hidden" />
+      <span id="profile-badge-initial">?</span>
+    </button>
+  </header>
+
+  <main id="app-main">
+
+    <section id="view-playas" class="view active">
+      <div id="playas-map"></div>
+      <button id="add-beach-btn" class="fab">＋ Playa</button>
+    </section>
+
+    <section id="view-camperos" class="view">
+      <div class="view-header">
+        <h2>Camperos</h2>
+        <button id="add-campero-btn" class="btn-primary">＋ Nuevo sitio</button>
+      </div>
+      <div id="camperos-list" class="card-list"></div>
+    </section>
+
+    <section id="view-experiencia" class="view">
+      <div class="view-header">
+        <h2>Experiencia por días</h2>
+        <button id="add-day-btn" class="btn-primary">＋ Añadir día</button>
+      </div>
+      <div id="days-list" class="card-list"></div>
+    </section>
+
+  </main>
+
+  <nav id="tab-bar">
+    <button class="tab-btn active" data-view="playas">
+      <span class="tab-icon">🏖️</span><span>Playas</span>
+    </button>
+    <button class="tab-btn" data-view="camperos">
+      <span class="tab-icon">🥪</span><span>Camperos</span>
+    </button>
+    <button class="tab-btn" data-view="experiencia">
+      <span class="tab-icon">📓</span><span>Experiencia</span>
+    </button>
+  </nav>
+
+  <!-- Overlay genérico para modales -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div id="modal-content" class="modal-content"></div>
+  </div>
+
+  <!-- Setup de perfil obligatorio la primera vez -->
+  <div id="profile-setup" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2>¿Quién eres? 👋</h2>
+      <p class="muted">Elige tu nombre y una foto para que los demás sepan quién ha votado.</p>
+      <label class="avatar-picker" for="profile-photo-input">
+        <img id="profile-photo-preview" src="" alt="" class="hidden" />
+        <span id="profile-photo-placeholder">📷<br/>Añadir foto</span>
+      </label>
+      <input type="file" id="profile-photo-input" accept="image/*" capture="user" class="hidden" />
+      <input type="text" id="profile-name-input" placeholder="Tu nombre" maxlength="20" />
+      <button id="profile-save-btn" class="btn-primary btn-block">Guardar y entrar</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
