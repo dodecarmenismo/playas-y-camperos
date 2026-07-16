@@ -7,8 +7,24 @@
 <title>Playas &amp; Camperos</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/icon.svg" />
 </head>
 <body>
+
+  <div id="config-warning" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2>Falta configurar Firebase ⚙️</h2>
+      <p class="muted">
+        <code>js/firebase-config.js</code> todavía tiene las claves de relleno
+        (<code>TU_API_KEY</code>, etc). Sigue los pasos del
+        <code>README.md</code> para crear tu proyecto gratuito de Firebase y
+        pega ahí tu configuración real. Hasta entonces la app no puede
+        guardar ni leer datos.
+      </p>
+    </div>
+  </div>
 
   <header id="app-header">
     <div id="app-title">🏖️ Playas &amp; Camperos</div>
