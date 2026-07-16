@@ -17,11 +17,13 @@ const CENTER = [36.69, -4.58];
 
 let map;
 let markers = new Map(); // beachId -> Leaflet marker
+let beachesData = []; // [{id, name, lat, lng}]
 let placingMode = false;
 let ratingsUnsub = null;
 
 export function initMapView() {
-  map = L.map("playas-map").setView(CENTER, 10);
+  map = L.map("playas-map", { zoomControl: false }).setView(CENTER, 10);
+  L.control.zoom({ position: "topright" }).addTo(map);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap",
     maxZoom: 19,
@@ -51,8 +53,12 @@ export function initMapView() {
           map.removeLayer(markers.get(id));
           markers.delete(id);
         }
+        beachesData = beachesData.filter((b) => b.id !== id);
         return;
       }
+      beachesData = beachesData.filter((b) => b.id !== id);
+      beachesData.push({ id, name: data.name, lat: data.lat, lng: data.lng });
+
       if (markers.has(id)) {
         markers.get(id).setLatLng([data.lat, data.lng]);
         return;
@@ -66,17 +72,125 @@ export function initMapView() {
       markers.set(id, marker);
     });
   });
+
+  initSearch();
+}
+
+function initSearch() {
+  const input = document.getElementById("beach-search-input");
+  const results = document.getElementById("beach-search-results");
+  let geocodeTimer = null;
+  let requestId = 0;
+
+  function hideResults() {
+    results.classList.add("hidden");
+    results.innerHTML = "";
+  }
+
+  function selectLocalBeach(beach) {
+    map.flyTo([beach.lat, beach.lng], 15);
+    openBeachDetail(beach.id, beach.name);
+    input.value = "";
+    hideResults();
+  }
+
+  function selectNewPlace(name, lat, lng) {
+    map.flyTo([lat, lng], 15);
+    openAddBeachModal({ lat, lng }, name);
+    input.value = "";
+    hideResults();
+  }
+
+  function renderResults(query, localMatches, externalMatches, loading) {
+    let html = "";
+    if (localMatches.length) {
+      html += `<div class="search-group-label">Tus playas</div>`;
+      localMatches.forEach((b, i) => {
+        html += `<button class="search-result-item" data-local="${i}">🏖️ ${escapeHtml(b.name)}</button>`;
+      });
+    }
+    if (query.length >= 3) {
+      html += `<div class="search-group-label">Buscar en el mapa</div>`;
+      if (loading) {
+        html += `<div class="search-empty">Buscando…</div>`;
+      } else if (externalMatches.length) {
+        externalMatches.forEach((r, i) => {
+          html += `<button class="search-result-item" data-external="${i}">📍 ${escapeHtml(r.label)}<span class="search-result-sub">${escapeHtml(r.sub)}</span></button>`;
+        });
+      } else {
+        html += `<div class="search-empty">Sin resultados</div>`;
+      }
+    }
+    if (!html) {
+      hideResults();
+      return;
+    }
+    results.innerHTML = html;
+    results.classList.remove("hidden");
+    results.querySelectorAll("[data-local]").forEach((btn) => {
+      btn.addEventListener("click", () => selectLocalBeach(localMatches[Number(btn.dataset.local)]));
+    });
+    results.querySelectorAll("[data-external]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const r = externalMatches[Number(btn.dataset.external)];
+        selectNewPlace(r.label, r.lat, r.lng);
+      });
+    });
+  }
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim();
+    clearTimeout(geocodeTimer);
+
+    if (!query) {
+      hideResults();
+      return;
+    }
+
+    const localMatches = beachesData
+      .filter((b) => b.name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5);
+
+    renderResults(query, localMatches, [], true);
+    if (query.length < 3) return;
+
+    const myRequestId = ++requestId;
+    geocodeTimer = setTimeout(async () => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query
+        )}&viewbox=-5.6,37.4,-3.9,36.2&bounded=1&limit=5`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (myRequestId !== requestId) return; // el usuario ya escribió otra cosa
+        const externalMatches = data.map((r) => ({
+          label: r.display_name.split(",")[0],
+          sub: r.display_name,
+          lat: parseFloat(r.lat),
+          lng: parseFloat(r.lon),
+        }));
+        renderResults(query, localMatches, externalMatches, false);
+      } catch (err) {
+        if (myRequestId !== requestId) return;
+        renderResults(query, localMatches, [], false);
+      }
+    }, 450);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!document.getElementById("beach-search-wrap").contains(e.target)) hideResults();
+  });
 }
 
 function buildPopupHtml(id, name) {
   return `<strong>${escapeHtml(name)}</strong><br/><button class="beach-popup-btn" id="beach-vote-${id}">Ver / votar</button>`;
 }
 
-function openAddBeachModal(latlng) {
+function openAddBeachModal(latlng, presetName) {
   const el = openModal(`
     <h2>Nueva playa 🏖️</h2>
     <label class="field-label">Nombre de la playa</label>
-    <input type="text" id="new-beach-name" placeholder="Ej. Playa de la Misericordia" />
+    <input type="text" id="new-beach-name" placeholder="Ej. Playa de la Misericordia" value="${presetName ? escapeHtml(presetName) : ""}" />
     <button class="btn-primary btn-block" id="new-beach-save">Guardar</button>
   `);
   el.querySelector("#new-beach-save").addEventListener("click", async () => {

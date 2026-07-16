@@ -158,6 +158,55 @@ html, body {
   cursor: pointer;
 }
 
+#beach-search-wrap {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 58px;
+  z-index: 16;
+}
+#beach-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  background: white;
+}
+#beach-search-results {
+  margin-top: 6px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.search-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 10px 14px 4px;
+}
+.search-result-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sand-dark);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:active { background: var(--sand); }
+.search-result-sub { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 2px; }
+.search-empty { padding: 12px 14px; color: var(--muted); font-size: 0.85rem; }
+
 /* Cards */
 .card-list {
   padding: 4px 16px 90px;
