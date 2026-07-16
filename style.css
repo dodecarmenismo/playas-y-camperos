@@ -40,8 +40,16 @@ html, body {
   box-shadow: var(--shadow);
 }
 #app-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 1.05rem;
+}
+#app-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 .profile-badge {
   width: 38px;
