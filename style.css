@@ -73,6 +73,7 @@ html, body {
   right: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  z-index: 1;
 }
 
 .view { display: none; height: 100%; }
