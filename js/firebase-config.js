@@ -7,10 +7,10 @@
 // 5. Sube después firestore.rules desde la consola (Firestore -> Reglas) tal cual está en
 //    este repo, para que solo cada persona pueda editar sus propios votos.
 export const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyAcbSDFj2b1UZ_cuU8-0UA2M36DXQKV27Q",
+  authDomain: "playas-camperos.firebaseapp.com",
+  projectId: "playas-camperos",
+  storageBucket: "playas-camperos.firebasestorage.app",
+  messagingSenderId: "516819960959",
+  appId: "1:516819960959:web:3513b72069152bb874eb4a",
 };
