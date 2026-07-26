@@ -25,7 +25,10 @@ service cloud.firestore {
     match /camperos/{camperoId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if false;
+      // "update" solo se usa para rellenar lat/lng cuando la geolocalización
+      // automática no se pudo hacer al crearlo (backfill silencioso).
+      allow update: if request.auth != null;
+      allow delete: if false;
 
       match /ratings/{uid} {
         allow read: if true;

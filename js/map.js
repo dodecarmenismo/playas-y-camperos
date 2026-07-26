@@ -11,7 +11,7 @@ import { getProfile } from "./profile.js";
 import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
 import { avatarInnerHtml } from "./avatar.js";
-import { mountCamperoDetail } from "./camperos.js";
+import { mountCamperoDetail, geocode } from "./camperos.js";
 import { subscribeLocationComments, renderCommentsInto, openAddExperienceModal } from "./diary.js";
 
 // Punto medio entre Málaga capital y Coín
@@ -20,6 +20,7 @@ const CENTER = [36.69, -4.58];
 let map;
 let markers = new Map(); // beachId -> Leaflet marker
 let camperoMarkers = new Map(); // camperoId -> Leaflet marker
+let backfillAttempted = new Set(); // camperoId ya intentados en esta sesión
 let beachesData = []; // [{id, name, lat, lng}]
 let placingMode = false;
 let detailUnsub = null; // limpia las suscripciones del detalle (playa o campero) actualmente abierto
@@ -88,10 +89,22 @@ export function initMapView() {
         return;
       }
       if (typeof data.lat !== "number" || typeof data.lng !== "number") {
-        // No se pudo ubicar automáticamente (dirección demasiado vaga): sin chincheta.
+        // No se pudo ubicar automáticamente (dirección demasiado vaga, o es
+        // un campero de antes de tener geolocalización): sin chincheta.
         if (camperoMarkers.has(id)) {
           map.removeLayer(camperoMarkers.get(id));
           camperoMarkers.delete(id);
+        }
+        if (data.address && !backfillAttempted.has(id)) {
+          backfillAttempted.add(id);
+          geocode(`${data.address}, Málaga`)
+            .then((coords) => {
+              if (coords) return setDoc(doc(db, "camperos", id), coords, { merge: true });
+            })
+            .catch(() => {
+              // Sin permiso todavía (reglas no actualizadas) o sin conexión: no pasa nada,
+              // se reintentará en la siguiente sesión de cualquiera del grupo.
+            });
         }
         return;
       }

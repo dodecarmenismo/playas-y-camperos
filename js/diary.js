@@ -151,14 +151,18 @@ export function openAddExperienceModal({ presetBeachId, presetCamperoId } = {}) 
     const text = el.querySelector("#new-day-text").value.trim();
     const profile = getProfile();
 
+    // El id incluye la playa y el campero para que dos sitios distintos el
+    // mismo día no se pisen el enlace (cada combinación es su propio "día").
+    const dayId = `${date}__${beachId || "x"}__${camperoId || "x"}`;
+
     await setDoc(
-      doc(db, "days", date),
+      doc(db, "days", dayId),
       { date, beachId, camperoId, updatedAt: serverTimestamp() },
       { merge: true }
     );
 
     if (text && profile) {
-      await setDoc(doc(db, "days", date, "entries", profile.uid), {
+      await setDoc(doc(db, "days", dayId, "entries", profile.uid), {
         text,
         name: profile.name,
         photo: profile.photo || null,

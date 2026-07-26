@@ -199,7 +199,7 @@ export function mountCamperoDetail(campero, body) {
   };
 }
 
-async function geocode(searchQuery) {
+export async function geocode(searchQuery) {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       searchQuery
