@@ -17,6 +17,18 @@ import { subscribeLocationComments, renderCommentsInto, openAddExperienceModal }
 // Punto medio entre Málaga capital y Coín
 const CENTER = [36.69, -4.58];
 
+// Chincheta roja para camperos (la azul por defecto de Leaflet se deja para playas).
+const RED_ICON = L.divIcon({
+  className: "campero-pin",
+  html: `<svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z" fill="#e0392b" stroke="#7d1d15" stroke-width="1"/>
+    <circle cx="12.5" cy="12.5" r="5.5" fill="#fff"/>
+  </svg>`,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
 let map;
 let markers = new Map(); // beachId -> Leaflet marker
 let camperoMarkers = new Map(); // camperoId -> Leaflet marker
@@ -112,7 +124,7 @@ export function initMapView() {
         camperoMarkers.get(id).setLatLng([data.lat, data.lng]);
         return;
       }
-      const marker = L.marker([data.lat, data.lng]).addTo(map);
+      const marker = L.marker([data.lat, data.lng], { icon: RED_ICON }).addTo(map);
       marker.bindPopup(buildPopupHtml("campero", id, `🥪 ${data.name}`));
       marker.on("popupopen", () => {
         const btn = document.getElementById(`map-pin-campero-${id}`);
