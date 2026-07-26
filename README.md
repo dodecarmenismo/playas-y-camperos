@@ -4,13 +4,18 @@ App para 4 amigos que cada martes y domingo prueban una playa distinta de la
 provincia de Málaga (entre Málaga capital y Coín), y los martes además un
 campero en un sitio nuevo cada vez.
 
-- **Playas**: mapa donde marcáis las playas probadas y las valoráis con estrellas.
-- **Camperos**: lista de sitios de campero con valoración por categorías
-  (campero global, el sitio, el pan, el tostado) y comentarios.
-- **Experiencia**: diario por días con lo que cada uno vivió esa jornada.
+- **Playas**: un único mapa con chinchetas azules para las playas (rating con
+  estrellas) y los sitios de campero (rating por categorías: global, el
+  sitio, el pan, el tostado), cada uno con sus comentarios.
+- **Camperos**: lista alternativa de los mismos sitios de campero, para
+  añadir uno nuevo o verlos sin depender del mapa.
+- **Experiencia**: ya no es una pestaña aparte — al tocar la chincheta de
+  una playa o un campero, dentro aparece una sección "Experiencia" con lo
+  que cada uno vivió ese día (un mismo comentario puede enlazar la playa Y
+  el campero de un mismo martes, y aparece en ambos sitios).
 
-Cada persona elige un nombre y una foto de perfil la primera vez que abre la
-app (sin contraseñas, solo para identificar quién ha votado qué).
+Cada persona entra tocando su foto en una rejilla de perfiles fijos (sin
+contraseñas, solo para identificar quién ha votado qué).
 
 No hay servidor propio: es una web estática que guarda los datos en
 **Firebase Firestore** (plan gratuito), así que los 4 veis los mismos datos
@@ -72,20 +77,24 @@ style.css          Estilos (mobile-first)
 js/
   firebase-config.js  Claves de tu proyecto Firebase (rellenar)
   firebase.js         Inicialización de Firebase + login anónimo
-  profile.js           Selección de nombre/foto de cada persona
+  profile.js           Rejilla de perfiles fijos (Dani/Carmen/Jacinto/Ernesto/Guest)
+  avatar.js             Helper para pintar fotos de perfil con fallback
   stars.js              Widget de estrellas reutilizable
   modal.js              Helper de modales genérico
-  map.js                 Vista "Playas" (Leaflet + Firestore)
-  camperos.js             Vista "Camperos"
-  diary.js                 Vista "Experiencia"
+  map.js                 Mapa unificado (playas + camperos) + buscador
+  camperos.js             Detalle de campero (ratings por categoría) + lista
+  diary.js                 Comentarios de "experiencia" ligados a playa/campero
   main.js                   Arranque y navegación por pestañas
 firestore.rules       Reglas de seguridad para copiar en Firebase
 ```
 
 ## Notas
 
-- Las fotos de perfil se guardan como imagen comprimida directamente en
-  Firestore (no se usa Firebase Storage), así que todo cabe en el plan
-  gratuito sin necesitar tarjeta de crédito.
+- Las fotos de perfil son fijas (una por persona, en `assets/avatars/`), no
+  hay que subir nada al entrar.
+- Los camperos se geolocalizan automáticamente a partir de la dirección que
+  escribes (vía OpenStreetMap Nominatim). Si la dirección es muy vaga y no
+  se encuentra, el campero se guarda igualmente pero sin chincheta en el
+  mapa — sigue siendo votable desde la pestaña Camperos.
 - Cada persona solo puede editar su propio voto/comentario (controlado por
   las reglas de Firestore), pero todos podéis ver los de los demás.

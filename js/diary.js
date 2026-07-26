@@ -6,7 +6,7 @@ import {
   onSnapshot,
   serverTimestamp,
   query,
-  orderBy,
+  where,
 } from "./firebase.js";
 import { getProfile } from "./profile.js";
 import { openModal, closeModal } from "./modal.js";
@@ -16,140 +16,21 @@ const WEEKDAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes
 
 let beachesCache = [];
 let camperosCache = [];
-let daysCache = [];
-const entriesUnsubs = new Map();
 
-export function initDiaryView() {
-  document.getElementById("add-day-btn").addEventListener("click", openAddDayModal);
-
+// Carga las listas de playas/camperos para los desplegables del formulario.
+export function initExperience() {
   onSnapshot(collection(db, "beaches"), (snap) => {
     beachesCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   });
   onSnapshot(collection(db, "camperos"), (snap) => {
     camperosCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   });
-
-  onSnapshot(query(collection(db, "days"), orderBy("date", "desc")), (snap) => {
-    daysCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    renderList();
-  });
 }
 
-function weekdayLabel(dateStr) {
+function formatDateShort(dateStr) {
+  if (!dateStr) return "";
   const d = new Date(dateStr + "T12:00:00");
-  return WEEKDAYS[d.getDay()];
-}
-
-function formatDateHuman(dateStr) {
-  const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function renderList() {
-  const host = document.getElementById("days-list");
-  const openId = host.dataset.openId || null;
-  host.innerHTML = "";
-
-  if (daysCache.length === 0) {
-    host.innerHTML = `<div class="empty-state">Todavía no hay días registrados. ¡Añade el primero! 📓</div>`;
-    return;
-  }
-
-  daysCache.forEach((day) => {
-    const beach = beachesCache.find((b) => b.id === day.beachId);
-    const campero = camperosCache.find((c) => c.id === day.camperoId);
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-title-row" data-id="${day.id}">
-        <div>
-          <div class="card-title">${capitalize(weekdayLabel(day.date))} ${formatDateHuman(day.date)}</div>
-          <div class="day-meta">
-            ${beach ? `<span class="day-tag">🏖️ ${escapeHtml(beach.name)}</span>` : ""}
-            ${campero ? `<span class="day-tag">🥪 ${escapeHtml(campero.name)}</span>` : ""}
-          </div>
-        </div>
-      </div>
-      <div class="card-body hidden" id="day-body-${day.id}"></div>
-    `;
-    host.appendChild(card);
-    card.querySelector(".card-title-row").addEventListener("click", () => toggleDayCard(day));
-  });
-
-  if (openId && daysCache.some((d) => d.id === openId)) {
-    toggleDayCard(daysCache.find((d) => d.id === openId), true);
-  }
-}
-
-function toggleDayCard(day, forceOpen) {
-  const host = document.getElementById("days-list");
-  const body = document.getElementById(`day-body-${day.id}`);
-  const isOpen = !body.classList.contains("hidden");
-
-  entriesUnsubs.forEach((unsub) => unsub());
-  entriesUnsubs.clear();
-  document.querySelectorAll(".card-body").forEach((b) => b.classList.add("hidden"));
-
-  if (isOpen && !forceOpen) {
-    host.dataset.openId = "";
-    return;
-  }
-  host.dataset.openId = day.id;
-  body.classList.remove("hidden");
-  mountDayDetail(day, body);
-}
-
-function mountDayDetail(day, body) {
-  const profile = getProfile();
-  body.innerHTML = `
-    <div class="comment-list" id="entries-${day.id}"></div>
-    <div>
-      <label class="field-label">Tu experiencia ese día</label>
-      <textarea id="my-entry-${day.id}" placeholder="¿Qué tal fue?"></textarea>
-      <button class="btn-primary btn-block" id="save-entry-${day.id}">Guardar</button>
-    </div>
-  `;
-
-  const entriesHost = body.querySelector(`#entries-${day.id}`);
-  const myEntryEl = body.querySelector(`#my-entry-${day.id}`);
-
-  const unsub = onSnapshot(collection(db, "days", day.id, "entries"), (snap) => {
-    const entries = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
-    entriesHost.innerHTML = "";
-    if (entries.length === 0) {
-      entriesHost.innerHTML = `<div class="muted" style="font-size:0.8rem;">Nadie ha escrito todavía.</div>`;
-    }
-    entries.forEach((e) => {
-      const item = document.createElement("div");
-      item.className = "comment-item";
-      item.innerHTML = `
-        <div class="avatar-sm">${avatarInnerHtml(e.photo, e.name)}</div>
-        <div class="comment-text-wrap">
-          <div class="comment-author">${escapeHtml(e.name || "Anónimo")}</div>
-          <div>${escapeHtml(e.text)}</div>
-        </div>`;
-      entriesHost.appendChild(item);
-    });
-
-    const mine = entries.find((e) => e.uid === profile?.uid);
-    if (mine && !myEntryEl.dataset.touched) myEntryEl.value = mine.text;
-  });
-  entriesUnsubs.set(day.id, unsub);
-
-  myEntryEl.addEventListener("input", () => (myEntryEl.dataset.touched = "1"));
-
-  body.querySelector(`#save-entry-${day.id}`).addEventListener("click", async () => {
-    if (!profile) return;
-    const text = myEntryEl.value.trim();
-    if (!text) return;
-    await setDoc(doc(db, "days", day.id, "entries", profile.uid), {
-      text,
-      name: profile.name,
-      photo: profile.photo || null,
-      updatedAt: serverTimestamp(),
-    });
-  });
+  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
 function nextTuesdayOrSunday() {
@@ -162,13 +43,85 @@ function nextTuesdayOrSunday() {
   return today.toISOString().slice(0, 10);
 }
 
-function openAddDayModal() {
+// Escucha todos los días que mencionan esta playa (field="beachId") o este
+// campero (field="camperoId") y junta sus comentarios en una sola lista,
+// ordenada por fecha. Devuelve una función para cancelar todo de una vez.
+export function subscribeLocationComments(field, id, onChange) {
+  const dayUnsubs = new Map();
+  const daysMeta = new Map();
+  const entriesById = new Map();
+
+  function emit() {
+    const combined = [];
+    daysMeta.forEach((meta, dayId) => {
+      (entriesById.get(dayId) || []).forEach((e) => combined.push({ ...e, date: meta.date }));
+    });
+    combined.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    onChange(combined);
+  }
+
+  const mainUnsub = onSnapshot(query(collection(db, "days"), where(field, "==", id)), (snap) => {
+    const currentIds = new Set(snap.docs.map((d) => d.id));
+    dayUnsubs.forEach((unsub, dayId) => {
+      if (!currentIds.has(dayId)) {
+        unsub();
+        dayUnsubs.delete(dayId);
+        entriesById.delete(dayId);
+        daysMeta.delete(dayId);
+      }
+    });
+    snap.docs.forEach((d) => {
+      daysMeta.set(d.id, d.data());
+      if (!dayUnsubs.has(d.id)) {
+        const unsub = onSnapshot(collection(db, "days", d.id, "entries"), (esnap) => {
+          entriesById.set(
+            d.id,
+            esnap.docs.map((ed) => ({ uid: ed.id, ...ed.data() }))
+          );
+          emit();
+        });
+        dayUnsubs.set(d.id, unsub);
+      }
+    });
+    emit();
+  });
+
+  return () => {
+    mainUnsub();
+    dayUnsubs.forEach((u) => u());
+  };
+}
+
+export function renderCommentsInto(host, entries) {
+  host.innerHTML = "";
+  if (entries.length === 0) {
+    host.innerHTML = `<div class="muted" style="font-size:0.8rem;">Nadie ha comentado todavía.</div>`;
+    return;
+  }
+  entries.forEach((e) => {
+    const item = document.createElement("div");
+    item.className = "comment-item";
+    item.innerHTML = `
+      <div class="avatar-sm">${avatarInnerHtml(e.photo, e.name)}</div>
+      <div class="comment-text-wrap">
+        <div class="comment-author">${escapeHtml(e.name || "Anónimo")}<span class="comment-date"> · ${formatDateShort(e.date)}</span></div>
+        <div>${escapeHtml(e.text)}</div>
+      </div>`;
+    host.appendChild(item);
+  });
+}
+
+export function openAddExperienceModal({ presetBeachId, presetCamperoId } = {}) {
   const defaultDate = nextTuesdayOrSunday();
-  const beachOptions = beachesCache.map((b) => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join("");
-  const camperoOptions = camperosCache.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  const beachOptions = beachesCache
+    .map((b) => `<option value="${b.id}" ${b.id === presetBeachId ? "selected" : ""}>${escapeHtml(b.name)}</option>`)
+    .join("");
+  const camperoOptions = camperosCache
+    .map((c) => `<option value="${c.id}" ${c.id === presetCamperoId ? "selected" : ""}>${escapeHtml(c.name)}</option>`)
+    .join("");
 
   const el = openModal(`
-    <h2>Añadir día 📓</h2>
+    <h2>Añadir experiencia 📓</h2>
     <label class="field-label">Fecha</label>
     <input type="date" id="new-day-date" value="${defaultDate}" />
 
@@ -214,10 +167,6 @@ function openAddDayModal() {
     }
     closeModal();
   });
-}
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function escapeHtml(str) {

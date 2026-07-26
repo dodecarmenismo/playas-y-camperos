@@ -98,6 +98,14 @@ html, body {
 }
 .view-header h2 { margin: 0; font-size: 1.2rem; }
 
+.inline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.inline-header .field-label { margin: 0; }
+
 /* Tab bar */
 #tab-bar {
   position: fixed;

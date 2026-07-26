@@ -1,7 +1,7 @@
 import { initProfile } from "./profile.js";
 import { initMapView } from "./map.js";
 import { initCamperosView } from "./camperos.js";
-import { initDiaryView } from "./diary.js";
+import { initExperience } from "./diary.js";
 
 function setupTabs() {
   const tabButtons = document.querySelectorAll(".tab-btn");
@@ -20,7 +20,7 @@ async function init() {
   setupTabs();
   initMapView();
   initCamperosView();
-  initDiaryView();
+  initExperience();
   await initProfile();
 }
 

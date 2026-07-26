@@ -11,15 +11,18 @@ import { getProfile } from "./profile.js";
 import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
 import { avatarInnerHtml } from "./avatar.js";
+import { mountCamperoDetail } from "./camperos.js";
+import { subscribeLocationComments, renderCommentsInto, openAddExperienceModal } from "./diary.js";
 
 // Punto medio entre Málaga capital y Coín
 const CENTER = [36.69, -4.58];
 
 let map;
 let markers = new Map(); // beachId -> Leaflet marker
+let camperoMarkers = new Map(); // camperoId -> Leaflet marker
 let beachesData = []; // [{id, name, lat, lng}]
 let placingMode = false;
-let ratingsUnsub = null;
+let detailUnsub = null; // limpia las suscripciones del detalle (playa o campero) actualmente abierto
 
 export function initMapView() {
   map = L.map("playas-map", { zoomControl: false }).setView(CENTER, 10);
@@ -64,12 +67,45 @@ export function initMapView() {
         return;
       }
       const marker = L.marker([data.lat, data.lng]).addTo(map);
-      marker.bindPopup(buildPopupHtml(id, data.name));
+      marker.bindPopup(buildPopupHtml("beach", id, `🏖️ ${data.name}`));
       marker.on("popupopen", () => {
-        const btn = document.getElementById(`beach-vote-${id}`);
+        const btn = document.getElementById(`map-pin-beach-${id}`);
         if (btn) btn.addEventListener("click", () => openBeachDetail(id, data.name));
       });
       markers.set(id, marker);
+    });
+  });
+
+  onSnapshot(collection(db, "camperos"), (snap) => {
+    snap.docChanges().forEach((change) => {
+      const data = change.doc.data();
+      const id = change.doc.id;
+      if (change.type === "removed") {
+        if (camperoMarkers.has(id)) {
+          map.removeLayer(camperoMarkers.get(id));
+          camperoMarkers.delete(id);
+        }
+        return;
+      }
+      if (typeof data.lat !== "number" || typeof data.lng !== "number") {
+        // No se pudo ubicar automáticamente (dirección demasiado vaga): sin chincheta.
+        if (camperoMarkers.has(id)) {
+          map.removeLayer(camperoMarkers.get(id));
+          camperoMarkers.delete(id);
+        }
+        return;
+      }
+      if (camperoMarkers.has(id)) {
+        camperoMarkers.get(id).setLatLng([data.lat, data.lng]);
+        return;
+      }
+      const marker = L.marker([data.lat, data.lng]).addTo(map);
+      marker.bindPopup(buildPopupHtml("campero", id, `🥪 ${data.name}`));
+      marker.on("popupopen", () => {
+        const btn = document.getElementById(`map-pin-campero-${id}`);
+        if (btn) btn.addEventListener("click", () => openCamperoDetailModal({ id, ...data }));
+      });
+      camperoMarkers.set(id, marker);
     });
   });
 
@@ -182,8 +218,8 @@ function initSearch() {
   });
 }
 
-function buildPopupHtml(id, name) {
-  return `<strong>${escapeHtml(name)}</strong><br/><button class="beach-popup-btn" id="beach-vote-${id}">Ver / votar</button>`;
+function buildPopupHtml(kind, id, label) {
+  return `<strong>${escapeHtml(label)}</strong><br/><button class="beach-popup-btn" id="map-pin-${kind}-${id}">Ver / votar</button>`;
 }
 
 function openAddBeachModal(latlng, presetName) {
@@ -217,6 +253,13 @@ function openBeachDetail(beachId, name) {
       <label class="field-label">Tu voto</label>
       <div id="beach-my-stars"></div>
     </div>
+    <div>
+      <div class="inline-header">
+        <label class="field-label">Experiencia</label>
+        <button class="btn-secondary" id="beach-add-exp">＋ Añadir</button>
+      </div>
+      <div class="comment-list" id="beach-exp"></div>
+    </div>
   `);
 
   const profile = getProfile();
@@ -234,8 +277,9 @@ function openBeachDetail(beachId, name) {
     },
   });
 
-  if (ratingsUnsub) ratingsUnsub();
-  ratingsUnsub = onSnapshot(collection(db, "beaches", beachId, "ratings"), (snap) => {
+  if (detailUnsub) detailUnsub();
+
+  const ratingsUnsub = onSnapshot(collection(db, "beaches", beachId, "ratings"), (snap) => {
     const ratings = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
     const avg = averageOf(ratings, "stars");
     el.querySelector("#beach-avg").textContent = formatAvg(avg, ratings.length);
@@ -261,6 +305,27 @@ function openBeachDetail(beachId, name) {
         renderStarsInto(row.querySelector(".stars"), { value: r.stars, readOnly: true, small: true });
       });
   });
+
+  const expHost = el.querySelector("#beach-exp");
+  const expUnsub = subscribeLocationComments("beachId", beachId, (entries) => renderCommentsInto(expHost, entries));
+  el.querySelector("#beach-add-exp").addEventListener("click", () => {
+    openAddExperienceModal({ presetBeachId: beachId });
+  });
+
+  detailUnsub = () => {
+    ratingsUnsub();
+    expUnsub();
+  };
+}
+
+function openCamperoDetailModal(campero) {
+  const el = openModal(`
+    <h2>${escapeHtml(campero.name)}</h2>
+    ${campero.address ? `<p class="muted">${escapeHtml(campero.address)}</p>` : ""}
+    <div id="campero-detail-body"></div>
+  `);
+  if (detailUnsub) detailUnsub();
+  detailUnsub = mountCamperoDetail(campero, el.querySelector("#campero-detail-body"));
 }
 
 function escapeHtml(str) {

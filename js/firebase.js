@@ -16,6 +16,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  where,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const isPlaceholderConfig = firebaseConfig.apiKey === "TU_API_KEY";
@@ -37,6 +38,7 @@ export {
   serverTimestamp,
   query,
   orderBy,
+  where,
 };
 
 let signedInUser = null;
