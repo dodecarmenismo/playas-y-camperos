@@ -12,7 +12,7 @@ import {
 import { getProfile } from "./profile.js";
 import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
-import { avatarInnerHtml } from "./avatar.js";
+import { mountComments } from "./comments.js";
 import { subscribeLocationComments, renderCommentsInto, openAddExperienceModal } from "./diary.js";
 
 const CATEGORIES = [
@@ -76,7 +76,7 @@ function toggleCard(campero, forceOpen) {
   // cerrar cualquier otra tarjeta abierta
   openUnsubs.forEach((unsub) => unsub());
   openUnsubs.clear();
-  document.querySelectorAll(".card-body").forEach((b) => b.classList.add("hidden"));
+  host.querySelectorAll(".card-body").forEach((b) => b.classList.add("hidden"));
 
   if (isOpen && !forceOpen) {
     host.dataset.openId = "";
@@ -101,12 +101,11 @@ export function mountCamperoDetail(campero, body) {
     <div>
       <label class="field-label">Tu valoración</label>
       <div id="my-ratings-${campero.id}" style="display:flex;flex-direction:column;gap:8px;"></div>
-      <textarea id="my-comment-${campero.id}" placeholder="¿Qué tal el campero de hoy?" style="margin-top:8px;"></textarea>
       <button class="btn-primary btn-block" id="save-rating-${campero.id}">Guardar mi voto</button>
     </div>
     <div>
       <label class="field-label">Comentarios</label>
-      <div class="comment-list" id="comments-${campero.id}"></div>
+      <div id="comments-${campero.id}"></div>
     </div>
     <div>
       <div class="inline-header">
@@ -135,13 +134,15 @@ export function mountCamperoDetail(campero, body) {
     CATEGORIES.forEach((cat) => {
       payload[cat.key] = starWidgets[cat.key].getValue();
     });
-    payload.comment = body.querySelector(`#my-comment-${campero.id}`).value.trim();
-    await setDoc(doc(db, "camperos", campero.id, "ratings", profile.uid), payload);
+    // merge: conserva el comentario antiguo que pudiera tener este voto.
+    await setDoc(doc(db, "camperos", campero.id, "ratings", profile.uid), payload, { merge: true });
   });
 
   const avgHost = body.querySelector(`#cat-avgs-${campero.id}`);
   const commentsHost = body.querySelector(`#comments-${campero.id}`);
-  const myCommentEl = body.querySelector(`#my-comment-${campero.id}`);
+  const comments = mountComments(commentsHost, ["camperos", campero.id], {
+    placeholder: "¿Qué tal el campero?",
+  });
 
   const ratingsUnsub = onSnapshot(collection(db, "camperos", campero.id, "ratings"), (snap) => {
     const ratings = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
@@ -165,27 +166,20 @@ export function mountCamperoDetail(campero, body) {
 
     const mine = ratings.find((r) => r.uid === profile?.uid);
     CATEGORIES.forEach((cat) => starWidgets[cat.key].setValue(mine ? mine[cat.key] || 0 : 0));
-    if (mine?.comment && !myCommentEl.dataset.touched) myCommentEl.value = mine.comment;
 
-    commentsHost.innerHTML = "";
-    const withComments = ratings.filter((r) => r.comment && r.comment.trim());
-    if (withComments.length === 0) {
-      commentsHost.innerHTML = `<div class="muted" style="font-size:0.8rem;">Nadie ha comentado todavía.</div>`;
-    }
-    withComments.forEach((r) => {
-      const item = document.createElement("div");
-      item.className = "comment-item";
-      item.innerHTML = `
-        <div class="avatar-sm">${avatarInnerHtml(r.photo, r.name)}</div>
-        <div class="comment-text-wrap">
-          <div class="comment-author">${escapeHtml(r.name || "Anónimo")}</div>
-          <div>${escapeHtml(r.comment)}</div>
-        </div>`;
-      commentsHost.appendChild(item);
-    });
+    // Comentarios antiguos (guardados dentro del voto) se muestran en el hilo.
+    comments.setExtra(
+      ratings
+        .filter((r) => r.comment && r.comment.trim())
+        .map((r) => ({
+          id: `legacy-${r.uid}`,
+          name: r.name,
+          photo: r.photo,
+          text: r.comment,
+          time: r.updatedAt?.toMillis ? r.updatedAt.toMillis() : 0,
+        }))
+    );
   });
-
-  myCommentEl.addEventListener("input", () => (myCommentEl.dataset.touched = "1"));
 
   const expHost = body.querySelector(`#exp-${campero.id}`);
   const expUnsub = subscribeLocationComments("camperoId", campero.id, (entries) => renderCommentsInto(expHost, entries));
@@ -196,6 +190,7 @@ export function mountCamperoDetail(campero, body) {
   return () => {
     ratingsUnsub();
     expUnsub();
+    comments.destroy();
   };
 }
 

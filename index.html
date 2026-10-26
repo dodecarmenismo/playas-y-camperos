@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1b8a9c" />
 <title>Playas &amp; Camperos</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="style.css?v=6" />
+<link rel="stylesheet" href="style.css?v=7" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="assets/logo-192.png" type="image/png" />
 <link rel="apple-touch-icon" href="assets/logo-192.png" />
@@ -53,6 +53,14 @@
       <div id="camperos-list" class="card-list"></div>
     </section>
 
+    <section id="view-pelis" class="view">
+      <div class="view-header">
+        <h2>Pelis</h2>
+        <button id="add-movie-btn" class="btn-primary">＋ Nueva peli</button>
+      </div>
+      <div id="movies-list" class="card-list"></div>
+    </section>
+
   </main>
 
   <nav id="tab-bar">
@@ -61,6 +69,9 @@
     </button>
     <button class="tab-btn" data-view="camperos">
       <span class="tab-icon">🥪</span><span>Camperos</span>
+    </button>
+    <button class="tab-btn" data-view="pelis">
+      <span class="tab-icon">🎬</span><span>Pelis</span>
     </button>
   </nav>
 
@@ -79,6 +90,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="js/main.js?v=6"></script>
+  <script type="module" src="js/main.js?v=7"></script>
 </body>
 </html>

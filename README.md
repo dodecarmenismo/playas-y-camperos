@@ -9,6 +9,14 @@ campero en un sitio nuevo cada vez.
   sitio, el pan, el tostado), cada uno con sus comentarios.
 - **Camperos**: lista alternativa de los mismos sitios de campero, para
   añadir uno nuevo o verlos sin depender del mapa.
+- **Pelis**: lista de películas con póster, título, director, año y país.
+  Cada persona vota por categorías (global, guion, narración, fotografía,
+  BSO/sonido, interpretaciones, dirección) y todos pueden comentar. El
+  póster se sube desde el móvil (se reduce y se guarda en Firestore) o se
+  pega un enlace.
+- **Comentarios**: en playas, camperos y pelis cada persona puede escribir
+  tantos comentarios como quiera (y borrar los suyos). Las experiencias
+  también admiten varias por persona.
 - **Experiencia**: ya no es una pestaña aparte — al tocar la chincheta de
   una playa o un campero, dentro aparece una sección "Experiencia" con lo
   que cada uno vivió ese día (un mismo comentario puede enlazar la playa Y
@@ -83,6 +91,8 @@ js/
   modal.js              Helper de modales genérico
   map.js                 Mapa unificado (playas + camperos) + buscador
   camperos.js             Detalle de campero (ratings por categoría) + lista
+  movies.js                Pestaña Pelis (alta, ratings por categoría, detalle)
+  comments.js              Hilo de comentarios múltiples reutilizable
   diary.js                 Comentarios de "experiencia" ligados a playa/campero
   main.js                   Arranque y navegación por pestañas
 firestore.rules       Reglas de seguridad para copiar en Firebase

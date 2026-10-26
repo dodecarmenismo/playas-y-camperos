@@ -12,6 +12,7 @@ import { renderStarsInto, averageOf, formatAvg } from "./stars.js";
 import { openModal, closeModal } from "./modal.js";
 import { avatarInnerHtml } from "./avatar.js";
 import { mountCamperoDetail, geocode } from "./camperos.js";
+import { mountComments } from "./comments.js";
 import { subscribeLocationComments, renderCommentsInto, openAddExperienceModal } from "./diary.js";
 
 // Punto medio entre Málaga capital y Coín
@@ -278,6 +279,10 @@ function openBeachDetail(beachId, name) {
       <label class="field-label">Tu voto</label>
       <div id="beach-my-stars"></div>
     </div>
+    <div style="margin-top:16px;">
+      <label class="field-label">Comentarios</label>
+      <div id="beach-comments"></div>
+    </div>
     <div>
       <div class="inline-header">
         <label class="field-label">Experiencia</label>
@@ -337,9 +342,14 @@ function openBeachDetail(beachId, name) {
     openAddExperienceModal({ presetBeachId: beachId });
   });
 
+  const comments = mountComments(el.querySelector("#beach-comments"), ["beaches", beachId], {
+    placeholder: "¿Qué tal la playa?",
+  });
+
   detailUnsub = () => {
     ratingsUnsub();
     expUnsub();
+    comments.destroy();
   };
 }
 

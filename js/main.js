@@ -1,6 +1,7 @@
 import { initProfile } from "./profile.js";
 import { initMapView } from "./map.js";
 import { initCamperosView } from "./camperos.js";
+import { initMoviesView } from "./movies.js";
 import { initExperience } from "./diary.js";
 
 function setupTabs() {
@@ -20,6 +21,7 @@ async function init() {
   setupTabs();
   initMapView();
   initCamperosView();
+  initMoviesView();
   initExperience();
   await initProfile();
 }

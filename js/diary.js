@@ -3,6 +3,8 @@ import {
   collection,
   doc,
   setDoc,
+  addDoc,
+  deleteDoc,
   onSnapshot,
   serverTimestamp,
   query,
@@ -76,7 +78,7 @@ export function subscribeLocationComments(field, id, onChange) {
         const unsub = onSnapshot(collection(db, "days", d.id, "entries"), (esnap) => {
           entriesById.set(
             d.id,
-            esnap.docs.map((ed) => ({ uid: ed.id, ...ed.data() }))
+            esnap.docs.map((ed) => ({ uid: ed.id, ...ed.data(), entryId: ed.id, dayId: d.id }))
           );
           emit();
         });
@@ -98,15 +100,24 @@ export function renderCommentsInto(host, entries) {
     host.innerHTML = `<div class="muted" style="font-size:0.8rem;">Nadie ha comentado todavía.</div>`;
     return;
   }
+  const me = getProfile();
   entries.forEach((e) => {
     const item = document.createElement("div");
     item.className = "comment-item";
+    const canDelete = me && e.uid === me.uid;
     item.innerHTML = `
       <div class="avatar-sm">${avatarInnerHtml(e.photo, e.name)}</div>
       <div class="comment-text-wrap">
         <div class="comment-author">${escapeHtml(e.name || "Anónimo")}<span class="comment-date"> · ${formatDateShort(e.date)}</span></div>
-        <div>${escapeHtml(e.text)}</div>
-      </div>`;
+        <div class="comment-text">${escapeHtml(e.text)}</div>
+      </div>
+      ${canDelete ? `<button class="comment-delete" title="Borrar">✕</button>` : ""}`;
+    if (canDelete) {
+      item.querySelector(".comment-delete").addEventListener("click", async () => {
+        if (!confirm("¿Borrar esta experiencia?")) return;
+        await deleteDoc(doc(db, "days", e.dayId, "entries", e.entryId));
+      });
+    }
     host.appendChild(item);
   });
 }
@@ -162,7 +173,10 @@ export function openAddExperienceModal({ presetBeachId, presetCamperoId } = {}) 
     );
 
     if (text && profile) {
-      await setDoc(doc(db, "days", dayId, "entries", profile.uid), {
+      // addDoc: cada persona puede añadir tantas experiencias como quiera,
+      // incluso varias el mismo día.
+      await addDoc(collection(db, "days", dayId, "entries"), {
+        uid: profile.uid,
         text,
         name: profile.name,
         photo: profile.photo || null,
